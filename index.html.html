@@ -1,0 +1,2063 @@
+<!DOCTYPE html>
+<html lang="en" translate="no">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="google" content="notranslate">
+  <title>CVP &amp; Inventory Management Dashboard</title>
+  <meta name="description" content="A configurable Cost-Volume-Profit and perpetual inventory (FIFO/LIFO/AVCO, EOQ/ROP) dashboard for any product-based business.">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='20' fill='%23DD0000'/%3E%3Ctext x='50' y='68' font-size='60' text-anchor='middle' fill='%23FFCC00' font-family='Arial'%3E%24%3C/text%3E%3C/svg%3E">
+
+  <!-- FontAwesome & Google Fonts -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link href="https://fonts.googleapis.com/css2?family=Teko:wght@600;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  
+  <!-- Chart.js CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+  <style>
+    :root {
+      --rb-navy: #0A192F;
+      --rb-dark: #060D19;
+      --rb-card-bg: #112240;
+      --rb-red: #DD0000;
+      --rb-red-hover: #FF1A1A;
+      --rb-yellow: #FFCC00;
+      --rb-silver: #8892B0;
+      --rb-light-silver: #E2E8F0;
+      --rb-text-main: #F8FAFC;
+      --rb-border: #233554;
+      --rb-success: #10B981;
+      --rb-warning: #F59E0B;
+      --rb-danger: #EF4444;
+      --font-display: 'Teko', sans-serif;
+      --font-body: 'Inter', sans-serif;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background-color: var(--rb-dark);
+      color: var(--rb-text-main);
+      font-family: var(--font-body);
+      line-height: 1.5;
+      padding-bottom: 40px;
+    }
+
+    /* HEADER & NAVIGATION */
+    header {
+      background: linear-gradient(135deg, var(--rb-navy) 0%, #040914 100%);
+      border-bottom: 3px solid var(--rb-red);
+      padding: 1.1rem 2rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 1rem;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+      position: sticky;
+      top: 0;
+      z-index: 1000;
+    }
+
+    @media (max-width: 720px) {
+      header {
+        padding: 1rem;
+        justify-content: center;
+        text-align: center;
+      }
+    }
+
+    .brand-container {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .brand-logo {
+      width: 42px;
+      height: 42px;
+      background: var(--rb-red);
+      color: var(--rb-yellow);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 8px;
+      font-size: 1.5rem;
+      box-shadow: 0 0 12px rgba(221, 0, 0, 0.6);
+    }
+
+    .brand-titles h1 {
+      font-family: var(--font-display);
+      font-size: 2rem;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      line-height: 1;
+      color: #FFF;
+    }
+
+    .brand-titles h1[contenteditable="true"],
+    .brand-titles p span[contenteditable="true"] {
+      outline: none;
+      border-bottom: 1px dashed transparent;
+      cursor: text;
+    }
+
+    .brand-titles h1[contenteditable="true"]:hover,
+    .brand-titles p span[contenteditable="true"]:hover {
+      border-bottom-color: var(--rb-silver);
+    }
+
+    .brand-titles h1[contenteditable="true"]:focus,
+    .brand-titles p span[contenteditable="true"]:focus {
+      border-bottom-color: var(--rb-yellow);
+    }
+
+    .brand-titles p {
+      font-size: 0.8rem;
+      color: var(--rb-yellow);
+      font-weight: 600;
+      letter-spacing: 0.5px;
+    }
+
+    .nav-tabs {
+      display: flex;
+      background: rgba(255,255,255,0.05);
+      padding: 4px;
+      border-radius: 8px;
+      border: 1px solid var(--rb-border);
+    }
+
+    .tab-btn {
+      background: transparent;
+      border: none;
+      color: var(--rb-silver);
+      padding: 8px 20px;
+      font-weight: 600;
+      font-size: 0.9rem;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: all 0.25s ease;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .tab-btn:hover {
+      color: var(--rb-text-main);
+    }
+
+    .tab-btn.active {
+      background: var(--rb-red);
+      color: #FFF;
+      box-shadow: 0 2px 8px rgba(221,0,0,0.4);
+    }
+
+    .header-controls {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+
+    .toolbar-actions {
+      display: flex;
+      gap: 8px;
+    }
+
+    .toolbar-btn {
+      background: rgba(255,255,255,0.06);
+      border: 1px solid var(--rb-border);
+      color: var(--rb-silver);
+      padding: 9px 16px;
+      font-weight: 600;
+      font-size: 0.85rem;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .toolbar-btn:hover {
+      color: var(--rb-yellow);
+      border-color: var(--rb-yellow);
+      background: rgba(255, 204, 0, 0.08);
+    }
+
+    @media (max-width: 560px) {
+      .toolbar-btn-label { display: none; }
+      .toolbar-btn { padding: 9px 12px; }
+    }
+
+    /* CONTAINER & GRID LAYOUT */
+    .container {
+      max-width: 1400px;
+      margin: 2rem auto;
+      padding: 0 1.5rem;
+    }
+
+    .tab-content {
+      display: none;
+    }
+
+    .tab-content.active {
+      display: block;
+      animation: fadeIn 0.3s ease-in-out;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(6px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .dashboard-grid {
+      display: grid;
+      grid-template-columns: 360px 1fr;
+      gap: 1.5rem;
+    }
+
+    @media (max-width: 1024px) {
+      .dashboard-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    /* CARD STYLES */
+    .card {
+      background: var(--rb-card-bg);
+      border: 1px solid var(--rb-border);
+      border-radius: 12px;
+      padding: 1.25rem;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.25);
+      margin-bottom: 1.5rem;
+      transition: border-color 0.2s ease;
+    }
+
+    .card:hover {
+      border-color: #2E4372;
+    }
+
+    .card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1rem;
+      padding-bottom: 0.5rem;
+      border-bottom: 1px solid var(--rb-border);
+    }
+
+    .card-title {
+      font-family: var(--font-display);
+      font-size: 1.4rem;
+      letter-spacing: 0.5px;
+      color: var(--rb-yellow);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      text-transform: uppercase;
+    }
+
+    /* FORM INPUTS */
+    .form-group {
+      margin-bottom: 1rem;
+    }
+
+    .form-group label {
+      display: block;
+      font-size: 0.825rem;
+      font-weight: 500;
+      color: var(--rb-silver);
+      margin-bottom: 0.35rem;
+    }
+
+    .input-wrapper {
+      position: relative;
+      display: flex;
+      align-items: center;
+    }
+
+    .input-prefix {
+      position: absolute;
+      left: 12px;
+      color: var(--rb-silver);
+      font-size: 0.875rem;
+      font-weight: 600;
+    }
+
+    .form-control {
+      width: 100%;
+      background: rgba(10, 25, 47, 0.7);
+      border: 1px solid var(--rb-border);
+      color: var(--rb-text-main);
+      padding: 8px 12px;
+      padding-left: 28px;
+      border-radius: 6px;
+      font-size: 0.95rem;
+      font-weight: 600;
+      transition: border-color 0.2s;
+    }
+
+    .form-control.no-prefix {
+      padding-left: 12px;
+    }
+
+    .form-control:focus {
+      outline: none;
+      border-color: var(--rb-yellow);
+      box-shadow: 0 0 0 2px rgba(255, 204, 0, 0.2);
+    }
+
+    .helper-text {
+      font-size: 0.75rem;
+      color: var(--rb-silver);
+      margin-top: 3px;
+    }
+
+    /* SUMMARY SCORECARDS */
+    .scorecard-row {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 1rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .stat-card {
+      background: var(--rb-card-bg);
+      border: 1px solid var(--rb-border);
+      border-left: 4px solid var(--rb-yellow);
+      border-radius: 10px;
+      padding: 1rem;
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .stat-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 16px rgba(0,0,0,0.3);
+    }
+
+    .stat-card.accent-red { border-left-color: var(--rb-red); }
+    .stat-card.accent-green { border-left-color: var(--rb-success); }
+    .stat-card.accent-blue { border-left-color: #3B82F6; }
+    .stat-card.accent-yellow { border-left-color: var(--rb-yellow); }
+
+    .stat-label {
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      font-weight: 700;
+      color: var(--rb-silver);
+      letter-spacing: 0.5px;
+    }
+
+    .stat-value {
+      font-family: var(--font-display);
+      font-size: 2rem;
+      line-height: 1.1;
+      font-weight: 700;
+      color: #FFF;
+      margin: 4px 0;
+      overflow-wrap: break-word;
+    }
+
+    .stat-value .unit-suffix {
+      font-family: var(--font-body);
+      font-size: 0.9rem;
+      font-weight: 600;
+      color: var(--rb-silver);
+      letter-spacing: 0.5px;
+      margin-left: 4px;
+    }
+
+    .stat-subtext {
+      font-size: 0.75rem;
+      color: var(--rb-silver);
+    }
+
+    /* CHARTS CONTAINER */
+    .charts-grid-top {
+      display: grid;
+      grid-template-columns: 2fr 1fr;
+      gap: 1.5rem;
+      margin-bottom: 1.5rem;
+    }
+
+    @media (max-width: 900px) {
+      .charts-grid-top {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .chart-box {
+      position: relative;
+      height: 320px;
+      width: 100%;
+    }
+
+    .chart-caption {
+      margin-top: 0.75rem;
+      font-size: 0.825rem;
+      color: var(--rb-silver);
+      background: rgba(10, 25, 47, 0.5);
+      padding: 8px 12px;
+      border-radius: 6px;
+      border-left: 3px solid var(--rb-yellow);
+    }
+
+    /* TABLES */
+    .table-responsive {
+      overflow-x: auto;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.875rem;
+      text-align: left;
+    }
+
+    th {
+      background: rgba(10, 25, 47, 0.9);
+      color: var(--rb-yellow);
+      padding: 10px 12px;
+      font-weight: 600;
+      border-bottom: 2px solid var(--rb-border);
+      text-transform: uppercase;
+      font-size: 0.75rem;
+      letter-spacing: 0.5px;
+    }
+
+    td {
+      padding: 10px 12px;
+      border-bottom: 1px solid var(--rb-border);
+      color: var(--rb-text-main);
+    }
+
+    tr:hover td {
+      background: rgba(255, 255, 255, 0.02);
+    }
+
+    tr.highlight-base td {
+      background: rgba(255, 204, 0, 0.1);
+      font-weight: 600;
+    }
+
+    /* INVENTORY ALERT BANNER */
+    .alert-banner {
+      padding: 1rem 1.25rem;
+      border-radius: 10px;
+      margin-bottom: 1.5rem;
+      display: flex;
+      align-items: center;
+      gap: 15px;
+      font-weight: 600;
+      transition: all 0.3s;
+    }
+
+    .alert-banner.healthy {
+      background: rgba(16, 185, 129, 0.15);
+      border: 1px solid var(--rb-success);
+      color: #D1FAE5;
+    }
+
+    .alert-banner.warning {
+      background: rgba(239, 68, 68, 0.15);
+      border: 1px solid var(--rb-danger);
+      color: #FEE2E2;
+      animation: pulseAlert 2s infinite;
+    }
+
+    @keyframes pulseAlert {
+      0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.4); }
+      70% { box-shadow: 0 0 0 10px rgba(239, 68, 68, 0); }
+      100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
+    }
+
+    .alert-icon {
+      font-size: 1.75rem;
+    }
+
+    /* VISUAL STOCK LEVEL BAR */
+    .stock-gauge-wrapper {
+      margin: 1.5rem 0;
+      background: var(--rb-navy);
+      padding: 1rem;
+      border-radius: 8px;
+      border: 1px solid var(--rb-border);
+    }
+
+    .gauge-header {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.85rem;
+      margin-bottom: 8px;
+      font-weight: 600;
+    }
+
+    .gauge-track-container {
+      position: relative;
+      height: 28px;
+      background: rgba(255,255,255,0.1);
+      border-radius: 14px;
+      overflow: hidden;
+    }
+
+    .gauge-fill {
+      height: 100%;
+      background: linear-gradient(90deg, #10B981 0%, var(--rb-yellow) 70%, var(--rb-red) 100%);
+      width: 0%;
+      transition: width 0.5s ease;
+      border-radius: 14px;
+    }
+
+    .gauge-marker {
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      width: 3px;
+      background: #FFF;
+      z-index: 10;
+    }
+
+    .gauge-marker-label {
+      position: absolute;
+      top: -22px;
+      transform: translateX(-50%);
+      font-size: 0.7rem;
+      font-weight: 700;
+      color: var(--rb-yellow);
+      background: var(--rb-dark);
+      padding: 1px 4px;
+      border-radius: 3px;
+      border: 1px solid var(--rb-border);
+      white-space: nowrap;
+    }
+
+    /* BUTTONS */
+    .btn {
+      padding: 8px 16px;
+      border-radius: 6px;
+      font-weight: 600;
+      font-size: 0.85rem;
+      border: none;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.2s;
+    }
+
+    .btn-primary {
+      background: var(--rb-red);
+      color: #FFF;
+    }
+
+    .btn-primary:hover {
+      background: var(--rb-red-hover);
+      box-shadow: 0 0 10px rgba(221, 0, 0, 0.5);
+    }
+
+    .btn-secondary {
+      background: rgba(255,255,255,0.1);
+      color: var(--rb-text-main);
+      border: 1px solid var(--rb-border);
+    }
+
+    .btn-secondary:hover {
+      background: rgba(255,255,255,0.18);
+    }
+
+    .btn-danger {
+      background: rgba(239, 68, 68, 0.2);
+      color: var(--rb-danger);
+      border: 1px solid rgba(239, 68, 68, 0.4);
+    }
+
+    .btn-danger:hover {
+      background: var(--rb-danger);
+      color: #FFF;
+    }
+
+    .btn-sm {
+      padding: 4px 8px;
+      font-size: 0.75rem;
+    }
+
+    /* BADGES */
+    .badge {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-size: 0.7rem;
+      font-weight: 700;
+      text-transform: uppercase;
+    }
+
+    .badge-in { background: rgba(16, 185, 129, 0.2); color: var(--rb-success); border: 1px solid var(--rb-success); }
+    .badge-out { background: rgba(239, 68, 68, 0.2); color: var(--rb-danger); border: 1px solid var(--rb-danger); }
+    .badge-open { background: rgba(255, 204, 0, 0.2); color: var(--rb-yellow); border: 1px solid var(--rb-yellow); }
+
+    .badge-a { background: rgba(239, 68, 68, 0.25); color: #FCA5A5; border: 1px solid #EF4444; }
+    .badge-b { background: rgba(245, 158, 11, 0.25); color: #FDE047; border: 1px solid #F59E0B; }
+    .badge-c { background: rgba(59, 130, 246, 0.25); color: #93C5FD; border: 1px solid #3B82F6; }
+
+    /* EDIT MODAL / FORM INLINE */
+    .inline-form-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+      gap: 10px;
+      align-items: end;
+    }
+
+    /* METHOD COMPARISON CARDS */
+    .valuation-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1rem;
+      margin-bottom: 1.5rem;
+    }
+
+    @media (max-width: 768px) {
+      .valuation-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .val-card {
+      background: rgba(10, 25, 47, 0.6);
+      border: 1px solid var(--rb-border);
+      border-radius: 8px;
+      padding: 1rem;
+      text-align: center;
+      position: relative;
+    }
+
+    .val-card.selected {
+      border-color: var(--rb-yellow);
+      background: rgba(255, 204, 0, 0.05);
+      box-shadow: 0 0 10px rgba(255,204,0,0.15);
+    }
+
+    .val-card .method-title {
+      font-size: 0.8rem;
+      font-weight: 700;
+      color: var(--rb-silver);
+      text-transform: uppercase;
+    }
+
+    .val-card .method-value {
+      font-family: var(--font-display);
+      font-size: 1.6rem;
+      color: #FFF;
+      margin: 4px 0;
+    }
+
+    .val-card .method-cogs {
+      font-size: 0.75rem;
+      color: var(--rb-silver);
+    }
+
+    blockquote.note {
+      background: rgba(255, 204, 0, 0.05);
+      border-left: 3px solid var(--rb-yellow);
+      padding: 8px 12px;
+      font-size: 0.8rem;
+      color: var(--rb-silver);
+      margin-top: 1rem;
+      border-radius: 0 6px 6px 0;
+    }
+
+    .app-footer {
+      max-width: 1400px;
+      margin: 1rem auto 0;
+      padding: 1rem 1.5rem 2rem;
+      text-align: center;
+      font-size: 0.8rem;
+      color: var(--rb-silver);
+    }
+  </style>
+</head>
+<body>
+
+  <!-- HEADER NAVIGATION -->
+  <header>
+    <div class="brand-container">
+      <div class="brand-logo">
+        <i class="fa-solid fa-bolt"></i>
+      </div>
+      <div class="brand-titles">
+        <h1 id="brand-company-name" contenteditable="true" spellcheck="false" title="Click to rename your company" oninput="document.title = (this.innerText.trim() || 'Your Company') + ' — CVP & Inventory Dashboard'">Your Company Name</h1>
+        <p>CVP &amp; Inventory Management System &mdash; <span id="brand-product-name" contenteditable="true" spellcheck="false" title="Click to rename your product/SKU">Your Product / SKU</span></p>
+      </div>
+    </div>
+
+    <div class="header-controls">
+      <div class="nav-tabs">
+        <button class="tab-btn active" onclick="switchTab('cvp-tab', this)">
+          <i class="fa-solid fa-chart-line"></i> CVP Dashboard
+        </button>
+        <button class="tab-btn" onclick="switchTab('inventory-tab', this)">
+          <i class="fa-solid fa-boxes-stacked"></i> Inventory System
+        </button>
+      </div>
+
+      <div class="toolbar-actions">
+        <button class="toolbar-btn" onclick="exportData()" title="Save your data as a JSON file">
+          <i class="fa-solid fa-download"></i> <span class="toolbar-btn-label">Export</span>
+        </button>
+        <button class="toolbar-btn" onclick="document.getElementById('import-file-input').click()" title="Load a previously exported JSON file">
+          <i class="fa-solid fa-upload"></i> <span class="toolbar-btn-label">Import</span>
+        </button>
+        <input type="file" id="import-file-input" accept="application/json" style="display:none" onchange="importData(event)">
+      </div>
+    </div>
+  </header>
+
+  <main class="container">
+
+    <!-- ================================================================= -->
+    <!-- TAB 1: CVP & BREAK-EVEN DASHBOARD -->
+    <!-- ================================================================= -->
+    <div id="cvp-tab" class="tab-content active">
+      
+      <!-- Top Scorecards -->
+      <div class="scorecard-row">
+        <div class="stat-card accent-red">
+          <div class="stat-label">Break-Even Point (Units)</div>
+          <div class="stat-value" id="sc-bep-units">0</div>
+          <div class="stat-subtext">Formula: Fixed Costs / CM per Unit</div>
+        </div>
+        <div class="stat-card accent-red">
+          <div class="stat-label">Break-Even Revenue</div>
+          <div class="stat-value" id="sc-bep-revenue">$0</div>
+          <div class="stat-subtext">Formula: BEP Units × Selling Price</div>
+        </div>
+        <div class="stat-card accent-green">
+          <div class="stat-label">Contribution Margin Ratio</div>
+          <div class="stat-value" id="sc-cm-ratio">0%</div>
+          <div class="stat-subtext">Formula: (Selling Price - VC) / Price</div>
+        </div>
+        <div class="stat-card accent-blue">
+          <div class="stat-label">Margin of Safety</div>
+          <div class="stat-value" id="sc-mos-val">$0</div>
+          <div class="stat-subtext" id="sc-mos-sub">0 Units (0%)</div>
+        </div>
+      </div>
+
+      <div class="dashboard-grid">
+        <!-- CVP Control Panel -->
+        <div class="sidebar">
+          <div class="card">
+            <div class="card-header">
+              <span class="card-title"><i class="fa-solid fa-building"></i> Business Setup</span>
+            </div>
+            <div class="form-group">
+              <label for="unit-label-select">Unit Of Measure Label</label>
+              <select id="unit-label-select" class="form-control no-prefix" onchange="onUnitLabelPresetChange()">
+                <option value="Units" selected>Units</option>
+                <option value="Cases">Cases</option>
+                <option value="Boxes">Boxes</option>
+                <option value="Pallets">Pallets</option>
+                <option value="Pieces">Pieces</option>
+                <option value="Kg">Kilograms (Kg)</option>
+                <option value="Liters">Liters</option>
+                <option value="__custom__">Custom&hellip;</option>
+              </select>
+              <input type="text" id="unit-label" class="form-control no-prefix" value="Units" maxlength="20" oninput="onUnitLabelChange()" style="display:none; margin-top: 8px;" placeholder="Type your own label, e.g. Rolls">
+              <div class="helper-text">Applied across every screen &mdash; scorecards, charts, tables and alerts.</div>
+            </div>
+            <div class="helper-text" style="margin-top: 6px;">
+              <i class="fa-solid fa-circle-info"></i> All dollar figures assume USD. Rename your company at the top of the page, then replace the sample numbers below with your own.
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="card-header">
+              <span class="card-title"><i class="fa-solid fa-sliders"></i> CVP Parameters</span>
+            </div>
+            
+            <div class="form-group">
+              <label for="cvp-price">Selling Price per Unit ($)</label>
+              <div class="input-wrapper">
+                <span class="input-prefix">$</span>
+                <input type="number" id="cvp-price" class="form-control" value="20.00" step="0.10" min="0.01" oninput="calculateCVP()">
+              </div>
+              <div class="helper-text">Average price you invoice per unit sold</div>
+            </div>
+
+            <div class="form-group">
+              <label for="cvp-vc">Variable Cost per Unit ($)</label>
+              <div class="input-wrapper">
+                <span class="input-prefix">$</span>
+                <input type="number" id="cvp-vc" class="form-control" value="12.00" step="0.10" min="0" oninput="calculateCVP()">
+              </div>
+              <div class="helper-text">Direct materials, direct labor and variable overhead per unit</div>
+              <div class="helper-text" id="cvp-price-warning" style="display:none; color: var(--rb-danger); font-weight: 600;">
+                <i class="fa-solid fa-triangle-exclamation"></i> Selling price must be higher than variable cost, or the business can never break even.
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label for="cvp-fc">Total Fixed Costs, Period ($)</label>
+              <div class="input-wrapper">
+                <span class="input-prefix">$</span>
+                <input type="number" id="cvp-fc" class="form-control" value="500000" step="10000" min="0" oninput="calculateCVP()">
+              </div>
+              <div class="helper-text">Rent, salaries, insurance, marketing &mdash; costs that don't change with volume</div>
+            </div>
+
+            <div class="form-group">
+              <label for="cvp-volume">Planned Sales Volume (<span class="unit-label-inline">Units</span>)</label>
+              <div class="input-wrapper">
+                <span class="input-prefix"><i class="fa-solid fa-box"></i></span>
+                <input type="number" id="cvp-volume" class="form-control" value="80000" step="1000" min="0" oninput="calculateCVP()">
+              </div>
+              <div class="helper-text">Expected/target sales volume for the period</div>
+            </div>
+
+            <div class="form-group">
+              <label for="cvp-target-profit">Target Operating Profit ($)</label>
+              <div class="input-wrapper">
+                <span class="input-prefix">$</span>
+                <input type="number" id="cvp-target-profit" class="form-control" value="200000" step="10000" min="0" oninput="calculateCVP()">
+              </div>
+              <div class="helper-text">Desired net profit goal for CVP target analysis</div>
+            </div>
+
+            <hr style="border-color: var(--rb-border); margin: 1rem 0;">
+
+            <div class="stat-card" style="background: rgba(10,25,47,0.8); border-left-color: var(--rb-yellow);">
+              <div class="stat-label">Degree of Operating Leverage (DOL)</div>
+              <div class="stat-value" id="calc-dol" style="font-size: 1.5rem;">0.00</div>
+              <div class="stat-subtext">Formula: Total CM / Operating Income</div>
+            </div>
+
+            <div class="stat-card" style="background: rgba(10,25,47,0.8); border-left-color: var(--rb-success); margin-top: 10px;">
+              <div class="stat-label">Volume for Target Profit</div>
+              <div class="stat-value" id="calc-target-units" style="font-size: 1.4rem;">0</div>
+              <div class="stat-subtext" id="calc-target-rev">Revenue: $0</div>
+            </div>
+
+          </div>
+        </div>
+
+        <!-- CVP Charts & Tables -->
+        <div class="main-content">
+          
+          <!-- Chart Row 1: Line CVP & Donut -->
+          <div class="charts-grid-top">
+            <div class="card">
+              <div class="card-header">
+                <span class="card-title"><i class="fa-solid fa-chart-area"></i> Break-Even CVP Model</span>
+              </div>
+              <div class="chart-box">
+                <canvas id="cvpLinearChart"></canvas>
+              </div>
+              <div class="chart-caption">
+                Linear CVP Chart plotting Revenue vs. Total Cost lines across volume. The Break-Even Point occurs where Total Revenue equals Total Cost. Shaded regions illustrate operating Loss (red) and Profit (green).
+              </div>
+            </div>
+
+            <div class="card">
+              <div class="card-header">
+                <span class="card-title"><i class="fa-solid fa-chart-pie"></i> Price Structure</span>
+              </div>
+              <div class="chart-box">
+                <canvas id="unitDonutChart"></canvas>
+              </div>
+              <div class="chart-caption" id="donut-caption">
+                Per-unit breakdown of selling price into variable cost and contribution margin.
+              </div>
+            </div>
+          </div>
+
+          <!-- Chart Row 2: Stacked Bar Chart -->
+          <div class="card">
+            <div class="card-header">
+              <span class="card-title"><i class="fa-solid fa-chart-bar"></i> Total Revenue vs Cost Structure (At Planned Volume)</span>
+            </div>
+            <div class="chart-box" style="height: 220px;">
+              <canvas id="stackedBarChart"></canvas>
+            </div>
+            <div class="chart-caption" id="stacked-caption">
+              Total volume breakdown comparing total revenue against cost components (Variable Costs + Fixed Costs + Resulting Operating Profit/Loss).
+            </div>
+          </div>
+
+          <!-- Sensitivity Table -->
+          <div class="card">
+            <div class="card-header">
+              <span class="card-title"><i class="fa-solid fa-table-cells"></i> Break-Even Sensitivity / What-If Analysis</span>
+            </div>
+            <p style="font-size: 0.8rem; color: var(--rb-silver); margin-bottom: 1rem;">
+              Evaluates impact on Break-Even Point (Units) when key variables fluctuate independently while holding other parameters constant.
+            </p>
+            <div class="table-responsive">
+              <table id="sensitivity-table">
+                <thead>
+                  <tr>
+                    <th>Variable Shift</th>
+                    <th>Price (-20% to +20%)</th>
+                    <th>Var. Cost (-20% to +20%)</th>
+                    <th>Fixed Cost (-20% to +20%)</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <!-- Generated via JS -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+    <!-- ================================================================= -->
+    <!-- TAB 2: INVENTORY MANAGEMENT SYSTEM -->
+    <!-- ================================================================= -->
+    <div id="inventory-tab" class="tab-content">
+      
+      <!-- System Alert Banner -->
+      <div id="stock-alert-banner" class="alert-banner healthy">
+        <i class="fa-solid fa-circle-check alert-icon" id="alert-icon"></i>
+        <div>
+          <div style="font-size: 1.1rem;" id="alert-title">Inventory System Healthy</div>
+          <div style="font-size: 0.825rem; opacity: 0.9;" id="alert-msg">Current stock levels are above the Reorder Point. Supply chain operating normally.</div>
+        </div>
+      </div>
+
+      <!-- Inventory Top KPI Cards -->
+      <div class="scorecard-row">
+        <div class="stat-card accent-blue">
+          <div class="stat-label">Current Stock Balance</div>
+          <div class="stat-value" id="inv-current-qty">0</div>
+          <div class="stat-subtext">Physical units on hand</div>
+        </div>
+        <div class="stat-card accent-green">
+          <div class="stat-label">Closing Inventory Value</div>
+          <div class="stat-value" id="inv-current-val">$0</div>
+          <div class="stat-subtext" id="inv-method-label">Driven by FIFO Method</div>
+        </div>
+        <div class="stat-card accent-red">
+          <div class="stat-label">Reorder Point (ROP)</div>
+          <div class="stat-value" id="inv-rop-val">0</div>
+          <div class="stat-subtext">Safety Buffer Included</div>
+        </div>
+        <div class="stat-card accent-yellow">
+          <div class="stat-label">Economic Order Qty (EOQ)</div>
+          <div class="stat-value" id="inv-eoq-val">0</div>
+          <div class="stat-subtext">Optimal Order Batch</div>
+        </div>
+      </div>
+
+      <div class="dashboard-grid">
+        
+        <!-- Inventory Sidebar Controls & Parameters -->
+        <div class="sidebar">
+          
+          <!-- Method Selector Card -->
+          <div class="card">
+            <div class="card-header">
+              <span class="card-title"><i class="fa-solid fa-calculator"></i> Valuation Engine</span>
+            </div>
+            <div class="form-group">
+              <label for="primary-valuation-method">Primary Valuation Method</label>
+              <select id="primary-valuation-method" class="form-control no-prefix" onchange="updateInventorySystem()">
+                <option value="FIFO">FIFO (First-In, First-Out)</option>
+                <option value="LIFO">LIFO (Last-In, First-Out)</option>
+                <option value="AVCO">Weighted Average Cost (AVCO)</option>
+              </select>
+              <div class="helper-text">Determines stock ledger value & automatic sale COGS calculation.</div>
+            </div>
+          </div>
+
+          <!-- Valuation Comparison Summary Card -->
+          <div class="card">
+            <div class="card-header">
+              <span class="card-title"><i class="fa-solid fa-scale-balanced"></i> Method Comparison</span>
+            </div>
+            <div class="valuation-grid" style="grid-template-columns: 1fr; gap: 8px;">
+              <div class="val-card" id="card-fifo">
+                <div class="method-title">FIFO</div>
+                <div class="method-value" id="val-fifo-stock">$0</div>
+                <div class="method-cogs" id="val-fifo-cogs">COGS: $0</div>
+              </div>
+              <div class="val-card" id="card-lifo">
+                <div class="method-title">LIFO</div>
+                <div class="method-value" id="val-lifo-stock">$0</div>
+                <div class="method-cogs" id="val-lifo-cogs">COGS: $0</div>
+              </div>
+              <div class="val-card" id="card-avco">
+                <div class="method-title">Weighted Average</div>
+                <div class="method-value" id="val-avco-stock">$0</div>
+                <div class="method-cogs" id="val-avco-cogs">COGS: $0</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- EOQ / ROP Control Card -->
+          <div class="card">
+            <div class="card-header">
+              <span class="card-title"><i class="fa-solid fa-truck-ramp-box"></i> EOQ & ROP Parameters</span>
+            </div>
+
+            <div class="form-group">
+              <label for="param-annual-demand">Annual Demand (D)</label>
+              <input type="number" id="param-annual-demand" class="form-control no-prefix" value="24000" step="500" oninput="updateInventorySystem()">
+              <div class="helper-text">Assumption: Demand is spread evenly across working days</div>
+            </div>
+
+            <div class="form-group">
+              <label for="param-order-cost">Ordering Cost per Order (S) [$]</label>
+              <div class="input-wrapper">
+                <span class="input-prefix">$</span>
+                <input type="number" id="param-order-cost" class="form-control" value="150" step="10" oninput="updateInventorySystem()">
+              </div>
+              <div class="helper-text">Assumption: Fixed administrative &amp; freight cost per order</div>
+            </div>
+
+            <div class="form-group">
+              <label for="param-holding-cost">Holding Cost / Unit / Year (H) [$]</label>
+              <div class="input-wrapper">
+                <span class="input-prefix">$</span>
+                <input type="number" id="param-holding-cost" class="form-control" value="2.50" step="0.10" oninput="updateInventorySystem()">
+              </div>
+              <div class="helper-text">Assumption: Warehousing, insurance, and capital cost of holding stock</div>
+            </div>
+
+            <div class="form-group">
+              <label for="param-lead-time">Lead Time (L) [Days]</label>
+              <input type="number" id="param-lead-time" class="form-control no-prefix" value="10" step="1" oninput="updateInventorySystem()">
+              <div class="helper-text">Assumption: Supplier lead time is constant</div>
+            </div>
+
+            <div class="form-group">
+              <label for="param-work-days">Working Days / Year</label>
+              <input type="number" id="param-work-days" class="form-control no-prefix" value="300" step="1" oninput="updateInventorySystem()">
+            </div>
+
+            <div class="form-group">
+              <label for="param-safety-stock">Safety Stock</label>
+              <input type="number" id="param-safety-stock" class="form-control no-prefix" value="400" step="50" oninput="updateInventorySystem()">
+              <div class="helper-text">Buffer for demand surges (ROP = Demand Rate × Lead Time + Safety Stock)</div>
+            </div>
+
+            <blockquote class="note">
+              <strong>Model Assumptions:</strong> ROP includes safety stock buffer. Maximum Stock Level = ROP + EOQ.
+            </blockquote>
+
+          </div>
+
+        </div>
+
+        <!-- Inventory Main Content -->
+        <div class="main-content">
+          
+          <!-- Visual Gauge Component -->
+          <div class="card">
+            <div class="card-header">
+              <span class="card-title"><i class="fa-solid fa-chart-bar"></i> Stock Level & ROP / Max Threshold Gauge</span>
+            </div>
+            
+            <div class="stock-gauge-wrapper">
+              <div class="gauge-header">
+                <span>0</span>
+                <span id="gauge-curr-text" style="color: var(--rb-yellow);">Current: 0</span>
+                <span id="gauge-max-scale">Scale Max: 0</span>
+              </div>
+              <div class="gauge-track-container" id="gauge-container">
+                <div class="gauge-fill" id="gauge-fill-bar"></div>
+                <!-- Markers added by JS -->
+              </div>
+            </div>
+            <div class="chart-caption">
+              Visual gauge comparing current warehouse stock against Reorder Point (ROP) and Maximum Calculated Capacity (ROP + EOQ) with 15% visual headroom.
+            </div>
+          </div>
+
+          <!-- Inventory Transaction CRUD Form -->
+          <div class="card">
+            <div class="card-header">
+              <span class="card-title"><i class="fa-solid fa-pen-to-square"></i> Record New Inventory Transaction</span>
+            </div>
+            
+            <form id="add-transaction-form" onsubmit="handleAddTransaction(event)">
+              <div class="inline-form-grid">
+                <div class="form-group" style="margin-bottom:0;">
+                  <label for="tx-date">Date</label>
+                  <input type="date" id="tx-date" class="form-control no-prefix" required>
+                </div>
+                <div class="form-group" style="margin-bottom:0;">
+                  <label for="tx-type">Type</label>
+                  <select id="tx-type" class="form-control no-prefix" onchange="toggleFormCostField()">
+                    <option value="IN">PURCHASE (IN)</option>
+                    <option value="OUT">SALE (OUT)</option>
+                    <option value="OPENING">OPENING STOCK</option>
+                  </select>
+                </div>
+                <div class="form-group" style="margin-bottom:0;">
+                  <label for="tx-qty">Quantity (<span class="unit-label-inline">Units</span>)</label>
+                  <input type="number" id="tx-qty" class="form-control no-prefix" min="1" placeholder="e.g. 500" required>
+                </div>
+                <div class="form-group" id="tx-cost-group" style="margin-bottom:0;">
+                  <label for="tx-cost">Unit Cost ($)</label>
+                  <input type="number" id="tx-cost" class="form-control no-prefix" step="0.01" min="0" value="12.00" placeholder="12.00">
+                </div>
+                <div class="form-group" style="margin-bottom:0;">
+                  <label for="tx-ref">Reference / Order ID</label>
+                  <input type="text" id="tx-ref" class="form-control no-prefix" placeholder="e.g. PO-1004" required>
+                </div>
+                <div>
+                  <button type="submit" class="btn btn-primary" style="width: 100%; height: 38px;">
+                    <i class="fa-solid fa-plus"></i> Add Record
+                  </button>
+                </div>
+              </div>
+            </form>
+          </div>
+
+          <!-- Stock Ledger Table -->
+          <div class="card">
+            <div class="card-header">
+              <span class="card-title"><i class="fa-solid fa-list-check"></i> Perpetual Stock Ledger</span>
+              <span style="display:flex; align-items:center; gap:12px;">
+                <span style="font-size: 0.8rem; color: var(--rb-silver);">Real-Time Running Balance</span>
+                <button class="btn btn-secondary btn-sm" onclick="clearAllTransactions()" title="Remove all sample/demo transactions">
+                  <i class="fa-solid fa-broom"></i> Clear Sample Data
+                </button>
+              </span>
+            </div>
+            <div class="table-responsive">
+              <table id="ledger-table">
+                <thead>
+                  <tr>
+                    <th>Date</th>
+                    <th>Ref / Document</th>
+                    <th>Type</th>
+                    <th>Qty IN / (OUT)</th>
+                    <th>Unit Cost</th>
+                    <th>Tx Total ($)</th>
+                    <th>Running Qty</th>
+                    <th>Running Value ($)</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="ledger-tbody">
+                  <!-- Dynamic rows -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- ABC Component Inventory Analysis -->
+          <div class="card">
+            <div class="card-header">
+              <span class="card-title"><i class="fa-solid fa-layer-group"></i> Bill-of-Materials ABC Inventory Classification</span>
+            </div>
+            <p style="font-size: 0.825rem; color: var(--rb-silver); margin-bottom: 1rem;">
+              Breakdown of finished-goods input components into Class A (highest value, tightest control), Class B (moderate control) and Class C (routine control). Double-click any cell below to edit it for your own bill of materials.
+            </p>
+            <div class="table-responsive">
+              <table id="abc-table">
+                <thead>
+                  <tr>
+                    <th>Tier</th>
+                    <th>Component / Input Material</th>
+                    <th>Unit UOM</th>
+                    <th>% Total Value</th>
+                    <th>Management Strategy</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td><span class="badge badge-a">Class A</span></td>
+                    <td contenteditable="true"><strong>Primary raw material / core component</strong></td>
+                    <td contenteditable="true">e.g. kg / liters</td>
+                    <td contenteditable="true"><strong>70%</strong></td>
+                    <td contenteditable="true">Tight perpetual tracking, frequent cycle counts, restricted access.</td>
+                  </tr>
+                  <tr>
+                    <td><span class="badge badge-b">Class B</span></td>
+                    <td contenteditable="true"><strong>Secondary components / packaging</strong></td>
+                    <td contenteditable="true">e.g. units</td>
+                    <td contenteditable="true"><strong>20%</strong></td>
+                    <td contenteditable="true">Periodic audit, vendor-managed inventory where possible.</td>
+                  </tr>
+                  <tr>
+                    <td><span class="badge badge-c">Class C</span></td>
+                    <td contenteditable="true"><strong>Low-value consumables / miscellaneous supplies</strong></td>
+                    <td contenteditable="true">e.g. bulk units</td>
+                    <td contenteditable="true"><strong>10%</strong></td>
+                    <td contenteditable="true">Simple reorder-point control, periodic visual checks.</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+    </div>
+
+  </main>
+
+  <footer class="app-footer">
+    <p>Configurable CVP &amp; Inventory Dashboard &mdash; all data stays in your browser. Use <strong>Export</strong> to save your work and <strong>Import</strong> to reload it later.</p>
+  </footer>
+
+  <!-- JAVASCRIPT LOGIC -->
+  <script>
+    /* ====================================================================
+       GLOBAL STATE & SEEDED INVENTORY TRANSACTIONS
+       ==================================================================== */
+    
+    // Sample transactions (12 illustrative stock movements over 30 days).
+    // This is placeholder demo data only -- edit, delete, or clear it and add your own via the form below.
+    let inventoryLedger = [
+      { id: 1, date: '2026-06-01', ref: 'OPEN-0001', type: 'OPENING', qty: 1400, unitCost: 11.50 },
+      { id: 2, date: '2026-06-03', ref: 'PO-1001', type: 'IN', qty: 1000, unitCost: 11.60 },
+      { id: 3, date: '2026-06-05', ref: 'SO-2001', type: 'OUT', qty: 720, unitCost: 0 },
+      { id: 4, date: '2026-06-08', ref: 'SO-2002', type: 'OUT', qty: 480, unitCost: 0 },
+      { id: 5, date: '2026-06-11', ref: 'PO-1002', type: 'IN', qty: 1200, unitCost: 11.75 },
+      { id: 6, date: '2026-06-14', ref: 'SO-2003', type: 'OUT', qty: 880, unitCost: 0 },
+      { id: 7, date: '2026-06-17', ref: 'SO-2004', type: 'OUT', qty: 600, unitCost: 0 },
+      { id: 8, date: '2026-06-20', ref: 'PO-1003', type: 'IN', qty: 1600, unitCost: 11.80 },
+      { id: 9, date: '2026-06-22', ref: 'SO-2005', type: 'OUT', qty: 800, unitCost: 0 },
+      { id: 10, date: '2026-06-24', ref: 'SO-2006', type: 'OUT', qty: 560, unitCost: 0 },
+      { id: 11, date: '2026-06-27', ref: 'PO-1004', type: 'IN', qty: 800, unitCost: 11.90 },
+      { id: 12, date: '2026-06-29', ref: 'SO-2007', type: 'OUT', qty: 640, unitCost: 0 }
+    ];
+
+    let nextTxId = 13;
+    let editingTxId = null;
+    let unitLabel = 'Units';
+
+    // Chart Handles
+    let cvpLinearChartInstance = null;
+    let unitDonutChartInstance = null;
+    let stackedBarChartInstance = null;
+
+    /* ====================================================================
+       INITIALIZATION & TAB NAVIGATION
+       ==================================================================== */
+    window.addEventListener('DOMContentLoaded', () => {
+      const dateInput = document.getElementById('tx-date');
+      if(dateInput && !dateInput.value) {
+        dateInput.value = new Date().toISOString().slice(0, 10);
+      }
+      onUnitLabelChange();
+      initCharts();
+      calculateCVP();
+      updateInventorySystem();
+    });
+
+    /* ====================================================================
+       BUSINESS SETUP (unit label, export/import)
+       ==================================================================== */
+    function onUnitLabelPresetChange() {
+      const select = document.getElementById('unit-label-select');
+      const customInput = document.getElementById('unit-label');
+
+      if(select.value === '__custom__') {
+        customInput.style.display = 'block';
+        customInput.value = '';
+        customInput.focus();
+        // Don't apply anything until the user actually types a valid custom label
+        return;
+      }
+
+      customInput.style.display = 'none';
+      customInput.value = select.value;
+      onUnitLabelChange();
+    }
+
+    function onUnitLabelChange() {
+      const select = document.getElementById('unit-label-select');
+      const raw = (document.getElementById('unit-label').value || '').trim();
+
+      // Guard against a blank label, a purely numeric label, or something implausibly long --
+      // any of these would render as garbled/duplicate-looking numbers in the scorecards.
+      const isValidLabel = raw.length > 0 && raw.length <= 20 && !/^[\d.,\s]+$/.test(raw);
+
+      if(select.value === '__custom__' && !isValidLabel) {
+        // Wait for a valid custom label before touching anything on screen
+        return;
+      }
+
+      unitLabel = isValidLabel ? raw : (select.value !== '__custom__' ? select.value : 'Units');
+      document.querySelectorAll('.unit-label-inline').forEach(el => el.innerText = unitLabel);
+      document.title = (document.getElementById('brand-company-name').innerText.trim() || 'Your Company') + ' — CVP & Inventory Dashboard';
+      // Recalculate so every on-screen figure picks up the new label (skip on first load, before charts exist)
+      if(cvpLinearChartInstance) {
+        cvpLinearChartInstance.options.scales.x.title.text = 'Volume (' + unitLabel + ')';
+        calculateCVP();
+        updateInventorySystem();
+      }
+    }
+
+    function exportData() {
+      const payload = {
+        exportedAt: new Date().toISOString(),
+        companyName: document.getElementById('brand-company-name').innerText.trim(),
+        productName: document.getElementById('brand-product-name').innerText.trim(),
+        unitLabel: unitLabel,
+        cvp: {
+          price: document.getElementById('cvp-price').value,
+          vc: document.getElementById('cvp-vc').value,
+          fc: document.getElementById('cvp-fc').value,
+          volume: document.getElementById('cvp-volume').value,
+          targetProfit: document.getElementById('cvp-target-profit').value
+        },
+        inventoryParams: {
+          annualDemand: document.getElementById('param-annual-demand').value,
+          orderCost: document.getElementById('param-order-cost').value,
+          holdingCost: document.getElementById('param-holding-cost').value,
+          leadTime: document.getElementById('param-lead-time').value,
+          workDays: document.getElementById('param-work-days').value,
+          safetyStock: document.getElementById('param-safety-stock').value,
+          valuationMethod: document.getElementById('primary-valuation-method').value
+        },
+        inventoryLedger: inventoryLedger,
+        nextTxId: nextTxId
+      };
+
+      const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      const safeName = (payload.companyName || 'dashboard').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '') || 'dashboard';
+      a.href = url;
+      a.download = `${safeName}-cvp-inventory-data.json`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+    }
+
+    function importData(event) {
+      const file = event.target.files[0];
+      if(!file) return;
+
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        try {
+          const data = JSON.parse(e.target.result);
+
+          if(data.companyName) document.getElementById('brand-company-name').innerText = data.companyName;
+          if(data.productName) document.getElementById('brand-product-name').innerText = data.productName;
+          if(data.unitLabel) {
+            const select = document.getElementById('unit-label-select');
+            const customInput = document.getElementById('unit-label');
+            const presetValues = Array.from(select.options).map(o => o.value);
+
+            if(presetValues.includes(data.unitLabel)) {
+              select.value = data.unitLabel;
+              customInput.value = data.unitLabel;
+              customInput.style.display = 'none';
+            } else {
+              select.value = '__custom__';
+              customInput.value = data.unitLabel;
+              customInput.style.display = 'block';
+            }
+          }
+
+          if(data.cvp) {
+            document.getElementById('cvp-price').value = data.cvp.price ?? document.getElementById('cvp-price').value;
+            document.getElementById('cvp-vc').value = data.cvp.vc ?? document.getElementById('cvp-vc').value;
+            document.getElementById('cvp-fc').value = data.cvp.fc ?? document.getElementById('cvp-fc').value;
+            document.getElementById('cvp-volume').value = data.cvp.volume ?? document.getElementById('cvp-volume').value;
+            document.getElementById('cvp-target-profit').value = data.cvp.targetProfit ?? document.getElementById('cvp-target-profit').value;
+          }
+
+          if(data.inventoryParams) {
+            const p = data.inventoryParams;
+            if(p.annualDemand !== undefined) document.getElementById('param-annual-demand').value = p.annualDemand;
+            if(p.orderCost !== undefined) document.getElementById('param-order-cost').value = p.orderCost;
+            if(p.holdingCost !== undefined) document.getElementById('param-holding-cost').value = p.holdingCost;
+            if(p.leadTime !== undefined) document.getElementById('param-lead-time').value = p.leadTime;
+            if(p.workDays !== undefined) document.getElementById('param-work-days').value = p.workDays;
+            if(p.safetyStock !== undefined) document.getElementById('param-safety-stock').value = p.safetyStock;
+            if(p.valuationMethod) document.getElementById('primary-valuation-method').value = p.valuationMethod;
+          }
+
+          if(Array.isArray(data.inventoryLedger)) {
+            inventoryLedger = data.inventoryLedger;
+            nextTxId = data.nextTxId || (Math.max(0, ...inventoryLedger.map(t => t.id)) + 1);
+          }
+
+          onUnitLabelChange();
+          updateInventorySystem();
+          alert('Data imported successfully.');
+        } catch(err) {
+          alert('Could not read that file. Please make sure it is a JSON file exported from this dashboard.');
+        }
+      };
+      reader.readAsText(file);
+      event.target.value = '';
+    }
+
+    function switchTab(tabId, btn) {
+      document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+      document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+      
+      document.getElementById(tabId).classList.add('active');
+      btn.classList.add('active');
+
+      if(tabId === 'cvp-tab') {
+        setTimeout(() => {
+          if(cvpLinearChartInstance) cvpLinearChartInstance.resize();
+          if(unitDonutChartInstance) unitDonutChartInstance.resize();
+          if(stackedBarChartInstance) stackedBarChartInstance.resize();
+        }, 50);
+      }
+    }
+
+    /* ====================================================================
+       TASK 1: CVP CALCULATIONS & VISUALIZATIONS
+       ==================================================================== */
+    function calculateCVP() {
+      const price = parseFloat(document.getElementById('cvp-price').value) || 0;
+      const vc = parseFloat(document.getElementById('cvp-vc').value) || 0;
+      const fc = parseFloat(document.getElementById('cvp-fc').value) || 0;
+      const volume = parseFloat(document.getElementById('cvp-volume').value) || 0;
+      const targetProfit = parseFloat(document.getElementById('cvp-target-profit').value) || 0;
+
+      const cm = price - vc;
+      const cmRatio = price > 0 ? (cm / price) : 0;
+
+      const priceWarning = document.getElementById('cvp-price-warning');
+      priceWarning.style.display = cm <= 0 ? 'block' : 'none';
+
+      const bepUnits = cm > 0 ? Math.ceil(fc / cm) : 0;
+      const bepRevenue = bepUnits * price;
+
+      const currentRevenue = volume * price;
+      const currentVC = volume * vc;
+      const totalCostAtVol = currentVC + fc;
+      const operatingIncome = (volume * cm) - fc;
+
+      const mosUnits = volume - bepUnits;
+      const mosVal = mosUnits * price;
+      const mosPercent = currentRevenue > 0 ? (mosVal / currentRevenue) * 100 : 0;
+
+      const totalCM = volume * cm;
+      const dol = operatingIncome > 0 ? (totalCM / operatingIncome) : 0;
+
+      const targetUnits = cm > 0 ? Math.ceil((fc + targetProfit) / cm) : 0;
+      const targetRev = targetUnits * price;
+
+      // Update Scorecards
+      document.getElementById('sc-bep-units').innerHTML = bepUnits.toLocaleString() + ' <span class="unit-suffix">' + unitLabel + '</span>';
+      document.getElementById('sc-bep-revenue').innerText = '$' + Math.round(bepRevenue).toLocaleString();
+      document.getElementById('sc-cm-ratio').innerText = (cmRatio * 100).toFixed(2) + '%';
+      
+      if(mosUnits >= 0) {
+        document.getElementById('sc-mos-val').innerText = '$' + Math.round(mosVal).toLocaleString();
+        document.getElementById('sc-mos-sub').innerText = `${Math.round(mosUnits).toLocaleString()} ${unitLabel} (${mosPercent.toFixed(1)}%)`;
+      } else {
+        document.getElementById('sc-mos-val').innerText = 'DEFICIT';
+        document.getElementById('sc-mos-sub').innerText = `Operating at a loss (${Math.abs(mosUnits).toLocaleString()} ${unitLabel.toLowerCase()} below BEP)`;
+      }
+
+      document.getElementById('calc-dol').innerText = dol > 0 ? dol.toFixed(2) + 'x' : 'N/A (Loss)';
+      document.getElementById('calc-target-units').innerHTML = targetUnits.toLocaleString() + ' <span class="unit-suffix">' + unitLabel + '</span>';
+      document.getElementById('calc-target-rev').innerText = 'Revenue: $' + Math.round(targetRev).toLocaleString();
+
+      updateCVPCharts(price, vc, fc, volume, bepUnits, cm, operatingIncome);
+      updateSensitivityTable(price, vc, fc);
+    }
+
+    /* ====================================================================
+       CVP CHARTS (Chart.js Vanilla)
+       ==================================================================== */
+    function initCharts() {
+      // 1. Classic Linear CVP Chart
+      const ctxLinear = document.getElementById('cvpLinearChart').getContext('2d');
+      cvpLinearChartInstance = new Chart(ctxLinear, {
+        type: 'line',
+        data: {
+          datasets: [
+            {
+              label: 'Fixed Cost',
+              data: [],
+              borderColor: '#8892B0',
+              borderDash: [5, 5],
+              borderWidth: 1.5,
+              pointRadius: 0,
+              fill: false
+            },
+            {
+              label: 'Total Cost',
+              data: [],
+              borderColor: '#EF4444',
+              borderWidth: 2.5,
+              pointRadius: 0,
+              fill: false
+            },
+            {
+              label: 'Total Revenue',
+              data: [],
+              borderColor: '#10B981',
+              borderWidth: 2.5,
+              pointRadius: 0,
+              fill: 1, // fill relative to dataset index 1 (Total Cost)
+              backgroundColor: function(context) {
+                return 'rgba(16, 185, 129, 0.12)';
+              }
+            },
+            {
+              label: 'Break-Even Point',
+              data: [],
+              borderColor: '#FFCC00',
+              backgroundColor: '#FFCC00',
+              pointRadius: 7,
+              pointHoverRadius: 9,
+              showLine: false
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          scales: {
+            x: {
+              type: 'linear',
+              position: 'bottom',
+              title: { display: true, text: 'Volume (' + unitLabel + ')', color: '#8892B0' },
+              grid: { color: '#233554' },
+              ticks: { color: '#8892B0' }
+            },
+            y: {
+              title: { display: true, text: 'Amount ($)', color: '#8892B0' },
+              grid: { color: '#233554' },
+              ticks: {
+                color: '#8892B0',
+                callback: function(val) { return '$' + (val / 1e6).toFixed(0) + 'M'; }
+              }
+            }
+          },
+          plugins: {
+            legend: { labels: { color: '#F8FAFC' } },
+            tooltip: {
+              callbacks: {
+                label: function(ctx) {
+                  return `${ctx.dataset.label}: $${Math.round(ctx.parsed.y).toLocaleString()}`;
+                }
+              }
+            }
+          }
+        }
+      });
+
+      // 2. Unit Price Donut Chart
+      const ctxDonut = document.getElementById('unitDonutChart').getContext('2d');
+      unitDonutChartInstance = new Chart(ctxDonut, {
+        type: 'doughnut',
+        data: {
+          labels: ['Variable Cost / Unit', 'Contribution Margin / Unit'],
+          datasets: [{
+            data: [15.80, 27.40],
+            backgroundColor: ['#EF4444', '#10B981'],
+            borderColor: '#112240',
+            borderWidth: 2
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { position: 'bottom', labels: { color: '#F8FAFC', font: { size: 11 } } }
+          },
+          cutout: '65%'
+        }
+      });
+
+      // 3. Stacked Bar Chart
+      const ctxStacked = document.getElementById('stackedBarChart').getContext('2d');
+      stackedBarChartInstance = new Chart(ctxStacked, {
+        type: 'bar',
+        data: {
+          labels: ['Revenue vs Cost Breakdown'],
+          datasets: [
+            { label: 'Total Revenue', data: [0], backgroundColor: '#10B981', stack: 'Stack 0' },
+            { label: 'Variable Cost', data: [0], backgroundColor: '#EF4444', stack: 'Stack 1' },
+            { label: 'Fixed Cost', data: [0], backgroundColor: '#3B82F6', stack: 'Stack 1' },
+            { label: 'Operating Profit', data: [0], backgroundColor: '#FFCC00', stack: 'Stack 1' }
+          ]
+        },
+        options: {
+          indexAxis: 'y',
+          responsive: true,
+          maintainAspectRatio: false,
+          scales: {
+            x: {
+              stacked: true,
+              grid: { color: '#233554' },
+              ticks: {
+                color: '#8892B0',
+                callback: function(val) { return '$' + (val / 1e6).toFixed(0) + 'M'; }
+              }
+            },
+            y: { stacked: true, grid: { display: false }, ticks: { color: '#F8FAFC' } }
+          },
+          plugins: {
+            legend: { position: 'bottom', labels: { color: '#F8FAFC', font: { size: 11 } } },
+            tooltip: {
+              callbacks: {
+                label: function(ctx) {
+                  return `${ctx.dataset.label}: $${Math.round(ctx.raw).toLocaleString()}`;
+                }
+              }
+            }
+          }
+        }
+      });
+    }
+
+    function updateCVPCharts(price, vc, fc, volume, bepUnits, cm, operatingIncome) {
+      // 1. Update Linear CVP
+      const maxX = Math.max(volume * 1.3, bepUnits * 1.5, 1000);
+      const points = 10;
+      const step = maxX / points;
+
+      const fixedData = [];
+      const totalCostData = [];
+      const revenueData = [];
+
+      for(let i = 0; i <= points; i++) {
+        const x = i * step;
+        fixedData.push({ x: x, y: fc });
+        totalCostData.push({ x: x, y: fc + (vc * x) });
+        revenueData.push({ x: x, y: price * x });
+      }
+
+      cvpLinearChartInstance.data.datasets[0].data = fixedData;
+      cvpLinearChartInstance.data.datasets[1].data = totalCostData;
+      cvpLinearChartInstance.data.datasets[2].data = revenueData;
+      cvpLinearChartInstance.data.datasets[3].data = [{ x: bepUnits, y: bepUnits * price }];
+      cvpLinearChartInstance.update();
+
+      // 2. Update Unit Donut
+      unitDonutChartInstance.data.datasets[0].data = [vc, Math.max(0, cm)];
+      unitDonutChartInstance.update();
+      document.getElementById('donut-caption').innerText = 
+        `Out of every $${price.toFixed(2)} selling price per unit, $${vc.toFixed(2)} (${((vc/price)*100).toFixed(1)}%) covers direct variable costs, leaving $${cm.toFixed(2)} (${((cm/price)*100).toFixed(1)}%) as Contribution Margin to cover fixed overhead.`;
+
+      // 3. Update Stacked Bar
+      const totalRev = volume * price;
+      const totalVC = volume * vc;
+      const profit = Math.max(0, operatingIncome);
+
+      stackedBarChartInstance.data.datasets[0].data = [totalRev];
+      stackedBarChartInstance.data.datasets[1].data = [totalVC];
+      stackedBarChartInstance.data.datasets[2].data = [fc];
+      stackedBarChartInstance.data.datasets[3].data = [profit];
+      stackedBarChartInstance.update();
+
+      const stateText = operatingIncome >= 0 
+        ? `Generating $${Math.round(operatingIncome).toLocaleString()} in operating profit.`
+        : `Operating at a net loss of $${Math.round(Math.abs(operatingIncome)).toLocaleString()} because total costs exceed total revenue.`;
+
+      document.getElementById('stacked-caption').innerText = 
+        `At planned volume of ${volume.toLocaleString()} ${unitLabel.toLowerCase()}: Total Revenue = $${Math.round(totalRev).toLocaleString()} vs Total Cost = $${Math.round(totalVC + fc).toLocaleString()}. ${stateText}`;
+    }
+
+    function updateSensitivityTable(baseP, baseVC, baseFC) {
+      const percentages = [-0.20, -0.10, -0.05, 0, 0.05, 0.10, 0.20];
+      const tbody = document.querySelector('#sensitivity-table tbody');
+      tbody.innerHTML = '';
+
+      percentages.forEach(pct => {
+        const pctLabel = (pct > 0 ? '+' : '') + (pct * 100) + '%';
+        
+        // Shift Price
+        const pShift = baseP * (1 + pct);
+        const cmP = pShift - baseVC;
+        const bepP = cmP > 0 ? Math.ceil(baseFC / cmP) : 'N/A';
+
+        // Shift VC
+        const vcShift = baseVC * (1 + pct);
+        const cmVC = baseP - vcShift;
+        const bepVC = cmVC > 0 ? Math.ceil(baseFC / cmVC) : 'N/A';
+
+        // Shift FC
+        const fcShift = baseFC * (1 + pct);
+        const cmFC = baseP - baseVC;
+        const bepFC = cmFC > 0 ? Math.ceil(fcShift / cmFC) : 'N/A';
+
+        const tr = document.createElement('tr');
+        if(pct === 0) tr.className = 'highlight-base';
+
+        tr.innerHTML = `
+          <td><strong>${pctLabel} ${pct === 0 ? '(Base Case)' : ''}</strong></td>
+          <td>${typeof bepP === 'number' ? bepP.toLocaleString() + ' ' + unitLabel : bepP}</td>
+          <td>${typeof bepVC === 'number' ? bepVC.toLocaleString() + ' ' + unitLabel : bepVC}</td>
+          <td>${typeof bepFC === 'number' ? bepFC.toLocaleString() + ' ' + unitLabel : bepFC}</td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+
+    /* ====================================================================
+       TASK 2: INVENTORY MANAGEMENT ENGINE (FIFO / LIFO / AVCO)
+       ==================================================================== */
+    
+    function updateInventorySystem() {
+      const selectedMethod = document.getElementById('primary-valuation-method').value;
+      document.getElementById('inv-method-label').innerText = `Driven by ${selectedMethod} Engine`;
+
+      // Calculate stock under all 3 methods simultaneously
+      const fifoRes = calculateValuation('FIFO');
+      const lifoRes = calculateValuation('LIFO');
+      const avcoRes = calculateValuation('AVCO');
+
+      // Update comparison UI cards
+      document.getElementById('val-fifo-stock').innerText = '$' + Math.round(fifoRes.endingValue).toLocaleString();
+      document.getElementById('val-fifo-cogs').innerText = 'COGS: $' + Math.round(fifoRes.totalCOGS).toLocaleString();
+      
+      document.getElementById('val-lifo-stock').innerText = '$' + Math.round(lifoRes.endingValue).toLocaleString();
+      document.getElementById('val-lifo-cogs').innerText = 'COGS: $' + Math.round(lifoRes.totalCOGS).toLocaleString();
+
+      document.getElementById('val-avco-stock').innerText = '$' + Math.round(avcoRes.endingValue).toLocaleString();
+      document.getElementById('val-avco-cogs').innerText = 'COGS: $' + Math.round(avcoRes.totalCOGS).toLocaleString();
+
+      // Highlight selected method card
+      document.getElementById('card-fifo').classList.toggle('selected', selectedMethod === 'FIFO');
+      document.getElementById('card-lifo').classList.toggle('selected', selectedMethod === 'LIFO');
+      document.getElementById('card-avco').classList.toggle('selected', selectedMethod === 'AVCO');
+
+      // Get current active result
+      const activeRes = selectedMethod === 'FIFO' ? fifoRes : (selectedMethod === 'LIFO' ? lifoRes : avcoRes);
+
+      // Render Stock Ledger Table using active method breakdown
+      renderLedgerTable(activeRes.ledgerRows);
+
+      // Compute EOQ & ROP
+      const annualDemand = parseFloat(document.getElementById('param-annual-demand').value) || 0;
+      const orderCost = parseFloat(document.getElementById('param-order-cost').value) || 0;
+      const holdingCost = parseFloat(document.getElementById('param-holding-cost').value) || 0;
+      const leadTime = parseFloat(document.getElementById('param-lead-time').value) || 0;
+      const workDays = parseFloat(document.getElementById('param-work-days').value) || 300;
+      const safetyStock = parseFloat(document.getElementById('param-safety-stock').value) || 0;
+
+      const dailyDemand = workDays > 0 ? (annualDemand / workDays) : 0;
+      const eoq = (holdingCost > 0 && annualDemand > 0) ? Math.round(Math.sqrt((2 * annualDemand * orderCost) / holdingCost)) : 0;
+      const rop = Math.round((dailyDemand * leadTime) + safetyStock);
+      const maxStock = rop + eoq;
+
+      // Update Top KPIs
+      document.getElementById('inv-current-qty').innerHTML = activeRes.endingQty.toLocaleString() + ' <span class="unit-suffix">' + unitLabel + '</span>';
+      document.getElementById('inv-current-val').innerText = '$' + Math.round(activeRes.endingValue).toLocaleString();
+      document.getElementById('inv-rop-val').innerHTML = rop.toLocaleString() + ' <span class="unit-suffix">' + unitLabel + '</span>';
+      document.getElementById('inv-eoq-val').innerHTML = eoq.toLocaleString() + ' <span class="unit-suffix">' + unitLabel + '</span>';
+
+      // Update Alert Banner
+      const alertBanner = document.getElementById('stock-alert-banner');
+      const alertIcon = document.getElementById('alert-icon');
+      const alertTitle = document.getElementById('alert-title');
+      const alertMsg = document.getElementById('alert-msg');
+
+      if(activeRes.endingQty < rop) {
+        alertBanner.className = 'alert-banner warning';
+        alertIcon.className = 'fa-solid fa-triangle-exclamation alert-icon';
+        alertTitle.innerText = 'CRITICAL LOW STOCK WARNING';
+        alertMsg.innerText = `Current stock (${activeRes.endingQty.toLocaleString()} ${unitLabel}) has fallen below Reorder Point (${rop.toLocaleString()} ${unitLabel}). Trigger automated replenishment PO of ${eoq.toLocaleString()} ${unitLabel} immediately.`;
+      } else {
+        alertBanner.className = 'alert-banner healthy';
+        alertIcon.className = 'fa-solid fa-circle-check alert-icon';
+        alertTitle.innerText = 'Inventory System Healthy';
+        alertMsg.innerText = `Current stock (${activeRes.endingQty.toLocaleString()} ${unitLabel}) is above Reorder Point (${rop.toLocaleString()} ${unitLabel}). Operations running smoothly.`;
+      }
+
+      // Update Visual Gauge
+      updateStockGauge(activeRes.endingQty, rop, maxStock);
+    }
+
+    /* Core Inventory Valuation Calculation Engine */
+    function calculateValuation(method) {
+      // Sort copy of transactions by date/ID
+      const sortedTxs = [...inventoryLedger].sort((a, b) => new Date(a.date) - new Date(b.date) || a.id - b.id);
+      
+      let batches = []; // For FIFO/LIFO [{qty, cost}]
+      let runningQty = 0;
+      let runningVal = 0;
+      let totalCOGS = 0;
+
+      const ledgerRows = [];
+
+      sortedTxs.forEach(tx => {
+        let txQty = tx.qty;
+        let txCost = tx.unitCost;
+        let txTotalVal = 0;
+        let unitCOGSForSale = 0;
+
+        if(tx.type === 'OPENING' || tx.type === 'IN') {
+          runningQty += txQty;
+          txTotalVal = txQty * txCost;
+          
+          if(method === 'AVCO') {
+            runningVal += txTotalVal;
+          } else {
+            batches.push({ qty: txQty, cost: txCost });
+            runningVal = batches.reduce((sum, b) => sum + (b.qty * b.cost), 0);
+          }
+        } else if(tx.type === 'OUT') {
+          runningQty -= txQty;
+
+          if(method === 'AVCO') {
+            const avgUnitCost = runningQty + txQty > 0 ? (runningVal / (runningQty + txQty)) : 0;
+            txTotalVal = txQty * avgUnitCost;
+            unitCOGSForSale = avgUnitCost;
+            runningVal -= txTotalVal;
+            totalCOGS += txTotalVal;
+          } else if(method === 'FIFO') {
+            let qtyNeeded = txQty;
+            let costAccumulator = 0;
+
+            for(let i = 0; i < batches.length && qtyNeeded > 0; i++) {
+              let b = batches[i];
+              let take = Math.min(b.qty, qtyNeeded);
+              costAccumulator += take * b.cost;
+              b.qty -= take;
+              qtyNeeded -= take;
+            }
+            batches = batches.filter(b => b.qty > 0);
+            
+            txTotalVal = costAccumulator;
+            unitCOGSForSale = txQty > 0 ? (txTotalVal / txQty) : 0;
+            runningVal = batches.reduce((sum, b) => sum + (b.qty * b.cost), 0);
+            totalCOGS += txTotalVal;
+          } else if(method === 'LIFO') {
+            let qtyNeeded = txQty;
+            let costAccumulator = 0;
+
+            for(let i = batches.length - 1; i >= 0 && qtyNeeded > 0; i--) {
+              let b = batches[i];
+              let take = Math.min(b.qty, qtyNeeded);
+              costAccumulator += take * b.cost;
+              b.qty -= take;
+              qtyNeeded -= take;
+            }
+            batches = batches.filter(b => b.qty > 0);
+
+            txTotalVal = costAccumulator;
+            unitCOGSForSale = txQty > 0 ? (txTotalVal / txQty) : 0;
+            runningVal = batches.reduce((sum, b) => sum + (b.qty * b.cost), 0);
+            totalCOGS += txTotalVal;
+          }
+        }
+
+        ledgerRows.push({
+          tx: tx,
+          txTotalVal: txTotalVal,
+          unitCOGSForSale: unitCOGSForSale,
+          runningQty: runningQty,
+          runningVal: Math.max(0, runningVal)
+        });
+      });
+
+      return {
+        endingQty: runningQty,
+        endingValue: Math.max(0, runningVal),
+        totalCOGS: totalCOGS,
+        ledgerRows: ledgerRows
+      };
+    }
+
+    function renderLedgerTable(rows) {
+      const tbody = document.getElementById('ledger-tbody');
+      tbody.innerHTML = '';
+
+      rows.forEach(item => {
+        const tx = item.tx;
+        const tr = document.createElement('tr');
+
+        let badgeClass = tx.type === 'IN' ? 'badge-in' : (tx.type === 'OUT' ? 'badge-out' : 'badge-open');
+        let displayQty = tx.type === 'OUT' ? `(${tx.qty.toLocaleString()})` : tx.qty.toLocaleString();
+        let displayCost = tx.type === 'OUT' ? `$${item.unitCOGSForSale.toFixed(2)}*` : `$${tx.unitCost.toFixed(2)}`;
+
+        tr.innerHTML = `
+          <td>${tx.date}</td>
+          <td><strong>${tx.ref}</strong></td>
+          <td><span class="badge ${badgeClass}">${tx.type}</span></td>
+          <td style="font-weight: 600;">${displayQty}</td>
+          <td>${displayCost}</td>
+          <td>$${Math.round(item.txTotalVal).toLocaleString()}</td>
+          <td style="font-weight: 700; color: var(--rb-yellow);">${item.runningQty.toLocaleString()}</td>
+          <td style="font-weight: 700;">$${Math.round(item.runningVal).toLocaleString()}</td>
+          <td>
+            <button class="btn btn-secondary btn-sm" onclick="editTransaction(${tx.id})"><i class="fa-solid fa-pen"></i></button>
+            <button class="btn btn-danger btn-sm" onclick="deleteTransaction(${tx.id})"><i class="fa-solid fa-trash"></i></button>
+          </td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    /* Visual Stock Gauge rendering */
+    function updateStockGauge(current, rop, maxStock) {
+      const scaleMax = Math.round(maxStock * 1.15); // 15% headroom
+      document.getElementById('gauge-max-scale').innerText = `Scale Limit: ${scaleMax.toLocaleString()} ${unitLabel}`;
+      document.getElementById('gauge-curr-text').innerText = `Current Stock: ${current.toLocaleString()} ${unitLabel}`;
+
+      const fillPct = Math.min(100, Math.max(0, (current / scaleMax) * 100));
+      document.getElementById('gauge-fill-bar').style.width = fillPct + '%';
+
+      const container = document.getElementById('gauge-container');
+      
+      // Remove old markers
+      container.querySelectorAll('.gauge-marker, .gauge-marker-label').forEach(el => el.remove());
+
+      // Add ROP Marker
+      const ropPct = (rop / scaleMax) * 100;
+      const ropMarker = document.createElement('div');
+      ropMarker.className = 'gauge-marker';
+      ropMarker.style.left = ropPct + '%';
+      ropMarker.style.background = 'var(--rb-red)';
+      
+      const ropLabel = document.createElement('div');
+      ropLabel.className = 'gauge-marker-label';
+      ropLabel.style.left = ropPct + '%';
+      ropLabel.innerText = `ROP: ${rop.toLocaleString()}`;
+
+      // Add Max Marker
+      const maxPct = (maxStock / scaleMax) * 100;
+      const maxMarker = document.createElement('div');
+      maxMarker.className = 'gauge-marker';
+      maxMarker.style.left = maxPct + '%';
+      maxMarker.style.background = '#3B82F6';
+
+      const maxLabel = document.createElement('div');
+      maxLabel.className = 'gauge-marker-label';
+      maxLabel.style.left = maxPct + '%';
+      maxLabel.innerText = `MAX: ${maxStock.toLocaleString()}`;
+
+      container.appendChild(ropMarker);
+      container.appendChild(ropLabel);
+      container.appendChild(maxMarker);
+      container.appendChild(maxLabel);
+    }
+
+    /* CRUD Handlers & Safety Validations */
+    function toggleFormCostField() {
+      const type = document.getElementById('tx-type').value;
+      const costGroup = document.getElementById('tx-cost-group');
+      if(type === 'OUT') {
+        costGroup.style.display = 'none';
+      } else {
+        costGroup.style.display = 'block';
+      }
+    }
+
+    function handleAddTransaction(e) {
+      e.preventDefault();
+      
+      const date = document.getElementById('tx-date').value;
+      const type = document.getElementById('tx-type').value;
+      const qty = parseInt(document.getElementById('tx-qty').value);
+      const unitCost = parseFloat(document.getElementById('tx-cost').value) || 0;
+      const ref = document.getElementById('tx-ref').value;
+
+      // Validation 1: Single Opening Stock Rule
+      if(type === 'OPENING') {
+        const hasOpening = inventoryLedger.some(t => t.type === 'OPENING' && t.id !== editingTxId);
+        if(hasOpening) {
+          alert('System Policy Error: Only ONE Opening Stock entry is allowed in the ledger sequence.');
+          return;
+        }
+      }
+
+      // Pro-actively test sequence for negative stock
+      let testLedger = [...inventoryLedger];
+      if(editingTxId) {
+        testLedger = testLedger.filter(t => t.id !== editingTxId);
+      }
+      testLedger.push({ id: editingTxId || nextTxId, date, ref, type, qty, unitCost });
+
+      if(willCauseNegativeStock(testLedger)) {
+        alert('Transaction Rejected: This entry causes running stock balance to drop below zero at a point in the timeline.');
+        return;
+      }
+
+      if(editingTxId) {
+        const idx = inventoryLedger.findIndex(t => t.id === editingTxId);
+        inventoryLedger[idx] = { id: editingTxId, date, ref, type, qty, unitCost };
+        editingTxId = null;
+        document.querySelector('#add-transaction-form button[type="submit"]').innerHTML = '<i class="fa-solid fa-plus"></i> Add Record';
+      } else {
+        inventoryLedger.push({ id: nextTxId++, date, ref, type, qty, unitCost });
+      }
+
+      // Reset form
+      document.getElementById('tx-qty').value = '';
+      document.getElementById('tx-ref').value = '';
+      
+      updateInventorySystem();
+    }
+
+    function editTransaction(id) {
+      const tx = inventoryLedger.find(t => t.id === id);
+      if(!tx) return;
+
+      editingTxId = id;
+      document.getElementById('tx-date').value = tx.date;
+      document.getElementById('tx-type').value = tx.type;
+      document.getElementById('tx-qty').value = tx.qty;
+      document.getElementById('tx-cost').value = tx.unitCost;
+      document.getElementById('tx-ref').value = tx.ref;
+
+      toggleFormCostField();
+      document.querySelector('#add-transaction-form button[type="submit"]').innerHTML = '<i class="fa-solid fa-floppy-disk"></i> Update Record';
+    }
+
+    function deleteTransaction(id) {
+      const tx = inventoryLedger.find(t => t.id === id);
+      if(!tx) return;
+
+      const testLedger = inventoryLedger.filter(t => t.id !== id);
+      if(willCauseNegativeStock(testLedger)) {
+        alert('Delete Operation Blocked: Removing this entry causes subsequent stock balances to become negative.');
+        return;
+      }
+
+      if(confirm(`Are you sure you want to delete transaction ${tx.ref}?`)) {
+        inventoryLedger = testLedger;
+        updateInventorySystem();
+      }
+    }
+
+    function clearAllTransactions() {
+      if(inventoryLedger.length === 0) {
+        alert('The ledger is already empty.');
+        return;
+      }
+
+      if(confirm('This will permanently remove ALL transactions currently in the ledger (including any sample data), so you can start fresh with your own records. Continue?')) {
+        inventoryLedger = [];
+        nextTxId = 1;
+        editingTxId = null;
+        updateInventorySystem();
+      }
+    }
+
+    function willCauseNegativeStock(ledgerArray) {
+      const sorted = [...ledgerArray].sort((a, b) => new Date(a.date) - new Date(b.date) || a.id - b.id);
+      let running = 0;
+      for(let tx of sorted) {
+        if(tx.type === 'IN' || tx.type === 'OPENING') running += tx.qty;
+        else if(tx.type === 'OUT') running -= tx.qty;
+
+        if(running < 0) return true;
+      }
+      return false;
+    }
+  </script>
+</body>
+</html>
